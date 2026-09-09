@@ -1,0 +1,21 @@
+import {createClient} from '@supabase/supabase-js';
+import {readFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+process.loadEnvFile('.env.local');
+const service=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.SUPABASE_SERVICE_ROLE_KEY!,{auth:{persistSession:false}});
+const qa=JSON.parse(await readFile('.env.qa','utf8'));
+const clients=await Promise.all(qa.map(async(a:any)=>{const c=createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,{auth:{persistSession:false}});const{error}=await c.auth.signInWithPassword(a);if(error)throw error;return c}));
+const c=clients[1];assert.ok((await c.rpc('makeit_admin_overview')).error);
+const {error}=await service.from('makeit_admins').insert({user_id:qa[1].id});if(error)throw error;
+async function rpc(name:string,args:Record<string,unknown>={}){const{data,error}=await c.rpc(name,args);if(error)throw error;return data}
+assert.equal(await rpc('makeit_is_admin'),true);
+const own=await clients[0].rpc('makeit_snapshot');const shop=own.data.shop.id;
+let d=await rpc('makeit_admin_shop',{p_shop:shop});const sale=d.sales.find((s:any)=>!s.voided_at&&s.payment==='cash');
+const items=d.items.filter((i:any)=>i.sale_id===sale.id).map((i:any)=>({id:i.product_id,quantity:i.quantity,price:60}));
+const args={p_request:crypto.randomUUID(),p_shop:shop,p_action:'sale',p_target:sale.id,p_expected:sale,p_data:{items,payment:'cash',created_at:sale.created_at},p_reason:'ทดสอบ Admin ปรับราคาบิล'};
+await Promise.all([rpc('makeit_admin_mutate',args),rpc('makeit_admin_mutate',args)]);
+d=await rpc('makeit_admin_shop',{p_shop:shop});assert.equal(d.audit.length,1);assert.ok(d.sales.find((s:any)=>s.id===sale.id).voided_at);assert.equal(d.sales.filter((s:any)=>s.id===args.p_request).length,1);
+assert.ok((await clients[0].rpc('makeit_admin_shop',{p_shop:shop})).error);
+const transfer=d.sales.find((s:any)=>s.slip_path);assert.ok((await c.storage.from('makeit-private').createSignedUrl(transfer.slip_path,60)).data?.signedUrl);
+assert.ok((await c.from('makeit_admin_audit').delete().eq('shop_id',shop)).error);
+console.log('LIVE ADMIN PASS: role enforcement, cross-shop detail and evidence, concurrent correction retry, original retained, immutable audit.');
