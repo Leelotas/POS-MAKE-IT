@@ -13,7 +13,7 @@ export function Photo({path,name}:{path:string|null;name:string}){
 export function Evidence({path}:{path:string}){const[url,setUrl]=useState('');const[error,setError]=useState(false);useEffect(()=>{signedImage(path).then(setUrl).catch(()=>setError(true))},[path]);return url?<a href={url} target="_blank" rel="noreferrer"><img className="evidence" src={url} alt="หลักฐานประกอบรายการ"/></a>:<p>{error?'เปิดภาพไม่สำเร็จ กรุณาปิดแล้วลองใหม่':'กำลังเปิดภาพ…'}</p>}
 export function Modal({title,children,onClose}:{title:string;children:React.ReactNode;onClose:()=>void}){
  const ref=useRef<HTMLDialogElement>(null);
- useEffect(()=>{ref.current?.showModal();const el=ref.current;return()=>el?.close()},[]);
+ useEffect(()=>{const el=ref.current,previous=document.body.style.overflow;el?.showModal();document.body.style.overflow='hidden';return()=>{document.body.style.overflow=previous;el?.close()}},[]);
  return <dialog ref={ref} className="modal" onCancel={e=>{e.preventDefault();onClose()}}><div className="modal-head"><h2>{title}</h2><button className="icon-btn" onClick={onClose} aria-label="ปิด"><X/></button></div><div className="modal-body">{children}</div></dialog>;
 }
 export function Submit({busy,children}:{busy:boolean;children:React.ReactNode}){return <button className="btn primary full" type="submit" disabled={busy}>{busy?<><LoaderCircle className="spin" size={18}/>กำลังบันทึก…</>:children}</button>}
