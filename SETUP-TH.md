@@ -13,7 +13,7 @@ npm ci
 Copy-Item .env.example .env.local
 ```
 
-เปิด `.env.local` เติมค่า URL และ publishable key จาก Supabase → Project Settings → API Keys ของโปรเจ็กต์ `xzzkhbxrttnbqguiohkh` สำหรับเปิดเว็บในเครื่อง ส่วน secret key และ `CRON_SECRET` ใช้เฉพาะงาน cleanup ฝั่งเซิร์ฟเวอร์และสคริปต์ผู้ดูแล เติม `TYPHOON_OCR_API_KEY` จาก OpenTyphoon เพื่อเปิดใช้การอ่านวัน–เวลาจากสลิป โดยคีย์นี้เป็นความลับฝั่งเซิร์ฟเวอร์และห้ามใช้ชื่อตัวแปรที่ขึ้นต้นด้วย `NEXT_PUBLIC_`
+เปิด `.env.local` เติมค่า URL และ publishable key จาก Supabase → Project Settings → API Keys ของโปรเจ็กต์ `xzzkhbxrttnbqguiohkh` สำหรับเปิดเว็บในเครื่อง ส่วน secret key และ `CRON_SECRET` ใช้เฉพาะงาน cleanup ฝั่งเซิร์ฟเวอร์และสคริปต์ผู้ดูแล เติม `TYPHOON_OCR_API_KEY` จาก OpenTyphoon เพื่อเปิดใช้การอ่านวัน–เวลาจากสลิป และตั้ง `ADMIN_ACTION_SECRET` เป็นรหัสยืนยันที่คาดเดายากสำหรับการลบร้านจากหน้า Admin คีย์ทั้งหมดนี้เป็นความลับฝั่งเซิร์ฟเวอร์และห้ามใช้ชื่อตัวแปรที่ขึ้นต้นด้วย `NEXT_PUBLIC_`
 
 อีกทางหนึ่ง ผู้ที่มีสิทธิ์ Vercel สามารถใช้ `npx vercel link` เลือกทีม `lee-co` และโปรเจ็กต์ `make-it-pos` แล้วใช้ `npx vercel env pull .env.local --environment=preview` ดึงตัวแปรผ่านการเข้าสู่ระบบของตนเอง อย่าสร้างโปรเจ็กต์ซ้ำ
 
@@ -35,7 +35,7 @@ npm run build
 
 Production อยู่ที่ https://make-it-pos.vercel.app และหน้า Admin อยู่ที่ https://make-it-pos.vercel.app/admin
 
-โปรเจ็กต์ Supabase เดิมติดตั้ง migrations 001, 002 และ 003 แล้ว ระบบเวลาและประเภทลูกค้าต้องติดตั้ง migration `202609120001_sale_time_and_customer.sql` เพิ่มหนึ่งครั้ง **อย่ารัน migrations เก่าซ้ำกับฐานข้อมูลเดิม** หากสร้างฐานข้อมูลใหม่จึงรันไฟล์ทั้งหมดตามลำดับ พร้อมตั้ง Auth URL, Storage และสิทธิ์ Admin ใหม่
+โปรเจ็กต์ Supabase เดิมติดตั้ง migrations 001, 002, 003, ระบบเวลา/ประเภทลูกค้า และระบบสมาชิกร้านแล้ว โดยระบบสมาชิกอยู่ใน `202609120002_membership_and_permissions.sql` **อย่ารัน migrations เก่าซ้ำกับฐานข้อมูลเดิม** หากสร้างฐานข้อมูลใหม่จึงรันไฟล์ทั้งหมดตามลำดับ พร้อมตั้ง Auth URL, Storage และสิทธิ์ Admin ใหม่
 
 การ deploy ด้วย CLI: `npx vercel deploy --target preview --scope lee-co` ตรวจ Preview แล้วจึง `npx vercel promote <preview-url> --scope lee-co` การ push โค้ดเข้า GitHub เพียงอย่างเดียวไม่ได้รับประกันการ deploy จนกว่าจะเชื่อม Git integration ของ Vercel
 

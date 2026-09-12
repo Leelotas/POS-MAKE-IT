@@ -19,6 +19,7 @@ Vercel preview and production need:
 - `SUPABASE_SERVICE_ROLE_KEY` (server only; supports a Supabase secret key)
 - `CRON_SECRET` (server only)
 - `TYPHOON_OCR_API_KEY` (server only; used to read the transaction date/time from transfer slips)
+- `ADMIN_ACTION_SECRET` (server only; confirmation secret for deleting a shop from the Admin page)
 
 `/api/cleanup` accepts only `Authorization: Bearer <CRON_SECRET>` and runs daily at 20:00 UTC. It removes unreferenced uploads older than 24 hours using a mark-under-shop-lock protocol so deletion cannot race checkout. Failed Storage removals are retried on the next run. Never expose the service key in a `NEXT_PUBLIC_` variable.
 
@@ -26,7 +27,7 @@ Authentication Site URL is `https://make-it-pos.vercel.app`; the redirect allowl
 
 ## Data and accounting
 
-- One authenticated owner per shop. RLS protects every business table; clients have read access only and write through constrained database functions.
+- One authenticated owner manages each shop and can invite confirmed users with a private shop code. Members can operate the POS but cannot export Excel/PDF, manage other members, rename the shop, or delete it. RLS and database functions resolve every request to the caller's current shop.
 - Product creation records opening stock without fabricating historical cash expenses. Restocking uses moving weighted-average cost. Adjustments record a reason and change the count, not cash flow.
 - Every sale stores immutable product name, unit price, and unit cost snapshots. A shop row lock serializes inventory mutations; checkout and stock decrements commit together. Retried request UUIDs return the existing result.
 - Cash sales require no photo. Transfers require an existing, private upload belonging to the shop. Signed image links expire after five minutes. Photos are evidence, not bank verification.
@@ -47,7 +48,7 @@ Authentication Site URL is `https://make-it-pos.vercel.app`; the redirect allowl
 
 Browser checks performed on desktop Chrome and a 390px responsive viewport: sign-in, catalog, cart, cash checkout, transfer-without-slip validation, history, reports, Excel/PDF downloads. Report files were reopened and Thai PDF pages rendered for visual inspection. Actual iPhone Safari / Android camera hardware still requires testing on those devices. Chrome extension file-chooser automation needs “Allow access to file URLs”; direct authenticated Storage upload was tested independently.
 
-There are no offline sale submissions, employee roles, partial returns, taxes, discounts, or automatic bank/slip validation in v1. Local storage retains only each shop's cart and pending checkout request for safe retries.
+There are no offline sale submissions, multiple employee permission levels, partial returns, taxes, discounts, or automatic bank/slip validation in v1. Local storage retains only each shop's cart and pending checkout request for safe retries.
 # Admin และฟอนต์ (9 กันยายน 2569)
 
 - หน้า `/admin` ใช้บัญชี Supabase เดิม บัญชีที่ยืนยันอีเมลและมีรายชื่อใน `makeit_admins` เท่านั้นจึงเข้าได้ ไม่มีการกำหนดสิทธิ์จากข้อมูลที่ผู้ใช้แก้เอง

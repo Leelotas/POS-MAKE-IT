@@ -1,10 +1,12 @@
 export type Product = {id:string;shop_id:string;name:string;category:string;image_path:string|null;price:number;average_cost:number;stock:number;active:boolean;created_at:string};
-export type CustomerType='Student'|'Office'|'Family'|'Unspecified';
+export type CustomerType='Student'|'Office'|'Family'|'Other'|'Unspecified';
 export type SaleTimeSource='system'|'manual'|'slip_ocr';
 export type Sale = {id:string;shop_id:string;bill_no:number;payment:'cash'|'transfer';slip_path:string|null;total:number;cost:number;created_at:string;recorded_at?:string;customer_type:CustomerType;time_source:SaleTimeSource;ocr_detected_at:string|null;voided_at:string|null;void_reason:string|null};
 export type Item = {id:string;sale_id:string;product_id:string;name:string;quantity:number;price:number;cost:number};
 export type Entry = {id:string;kind:'income'|'expense'|'purchase';category:string;amount:number;note:string;evidence_path:string|null;occurred_at:string;movement_id?:string|null};
 export type Movement = {id:string;product_id:string;kind:string;quantity:number;unit_cost:number;reason:string;created_at:string};
-export type Snapshot = {shop:{id:string;name:string;owner_id:string}|null;products:Product[];sales:Sale[];items:Item[];entries:Entry[];movements:Movement[]};
+export type ShopMember={user_id:string;email:string;role:'owner'|'member';joined_at:string};
+export type ShopAccess={role:'owner'|'member';can_export:boolean;join_code:string|null};
+export type Snapshot = {shop:{id:string;name:string;owner_id:string}|null;access:ShopAccess|null;members:ShopMember[];products:Product[];sales:Sale[];items:Item[];entries:Entry[];movements:Movement[]};
 export type Cart = Record<string,number>;
-export const emptySnapshot:Snapshot={shop:null,products:[],sales:[],items:[],entries:[],movements:[]};
+export const emptySnapshot:Snapshot={shop:null,access:null,members:[],products:[],sales:[],items:[],entries:[],movements:[]};
