@@ -9,7 +9,14 @@ const thaiMonths:Record<string,number>={
 const englishMonths:Record<string,number>={jan:1,january:1,feb:2,february:2,mar:3,march:3,apr:4,april:4,may:5,jun:6,june:6,jul:7,july:7,aug:8,august:8,sep:9,sept:9,september:9,oct:10,october:10,nov:11,november:11,dec:12,december:12};
 const two=(n:number)=>String(n).padStart(2,'0');
 
-function normalizeYear(year:number){return year>=2400?year-543:year<100?2000+year:year}
+function normalizeYear(year:number){
+ if(year>=2400)return year-543;
+ if(year>=100)return year;
+ // Thai slips may abbreviate either 2026 as "26" or 2569 as "69".
+ // Use whichever interpretation is closest to the current Gregorian year.
+ const current=new Date().getFullYear(),gregorian=2000+year,buddhist=2500+year-543;
+ return Math.abs(buddhist-current)<Math.abs(gregorian-current)?buddhist:gregorian;
+}
 function validDate(year:number,month:number,day:number){
  const d=new Date(Date.UTC(year,month-1,day));return d.getUTCFullYear()===year&&d.getUTCMonth()===month-1&&d.getUTCDate()===day;
 }
