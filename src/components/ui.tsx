@@ -3,6 +3,9 @@ import {useEffect,useRef,useState} from 'react';
 import {X,ImageIcon,LoaderCircle,Camera,Upload} from 'lucide-react';
 import {signedImage} from '@/lib/supabase';
 export function Logo({large=false}:{large?:boolean}){return <div className={`logo ${large?'large':''}`}><img src="/logo.png" alt="MAKE IT Mobile POS System"/></div>}
+export function LoadingScreen({label='กำลังเตรียมระบบ',admin=false}:{label?:string;admin?:boolean}){
+ return <main className={`loading-screen ${admin?'admin-loading':''}`} aria-busy="true" aria-live="polite"><div className="loading-glow one"/><div className="loading-glow two"/><section className="loading-card"><Logo/><div className="loading-symbol"><span/><i/><b/></div><span className="loading-eyebrow">{admin?'MAKE IT CONTROL CENTER':'MAKE IT MOBILE POS'}</span><h1>{label}</h1><p>จัดเตรียมข้อมูลให้พร้อมใช้งาน กรุณารอสักครู่</p><div className="loading-progress"><span/></div></section></main>;
+}
 export function Photo({path,name}:{path:string|null;name:string}){
  const [url,setUrl]=useState('');useEffect(()=>{let alive=true;setUrl('');if(path)signedImage(path).then(u=>{if(alive)setUrl(u)}).catch(()=>{});return()=>{alive=false}},[path]);
  return url?<img className="product-photo" src={url} alt={name}/>:<div className="product-placeholder"><ImageIcon size={30}/></div>;

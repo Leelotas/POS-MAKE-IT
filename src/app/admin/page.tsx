@@ -1,7 +1,7 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import Auth from '@/components/auth';
-import {Logo,Modal,Submit,Evidence,FileField,errorText} from '@/components/ui';
+import {Logo,LoadingScreen,Modal,Submit,Evidence,FileField,errorText} from '@/components/ui';
 import {rpc,supabase,upload} from '@/lib/supabase';
 import type {Snapshot} from '@/lib/types';
 import {baht,money,thaiDate,thaiDay,summaryRows,report} from '@/lib/reports';
@@ -18,15 +18,17 @@ const localTime=(s:string)=>new Date(new Date(s).getTime()+7*3600000).toISOStrin
 export default function Admin(){
  const[uid,setUid]=useState<string|null>(null),[ready,setReady]=useState(false),[allowed,setAllowed]=useState<boolean|null>(null);
  const[overview,setOverview]=useState<Overview|null>(null),[data,setData]=useState<ShopData|null>(null),[search,setSearch]=useState(''),[offset,setOffset]=useState(0),[tab,setTab]=useState('activity');
- const[error,setError]=useState(''),[notice,setNotice]=useState(''),[loading,setLoading]=useState(false),[edit,setEdit]=useState<Edit|null>(null),[deleteShop,setDeleteShop]=useState(false),[from,setFrom]=useState(thaiDay()),[to,setTo]=useState(thaiDay());
+ const[error,setError]=useState(''),[notice,setNotice]=useState(''),[loading,setLoading]=useState(false),[contentReady,setContentReady]=useState(false),[edit,setEdit]=useState<Edit|null>(null),[deleteShop,setDeleteShop]=useState(false),[from,setFrom]=useState(thaiDay()),[to,setTo]=useState(thaiDay());
  const identity=useRef<string|null>(null);const generation=useRef(0);
- useEffect(()=>{const sb=supabase();const {data:{subscription}}=sb.auth.onAuthStateChange((_event,s)=>{const next=s?.user.id??null;if(identity.current!==next){identity.current=next;generation.current++;setAllowed(null);setData(null);setOverview(null);setEdit(null)}setUid(next);setReady(true)});return()=>subscription.unsubscribe()},[]);
+ useEffect(()=>{const sb=supabase();const {data:{subscription}}=sb.auth.onAuthStateChange((_event,s)=>{const next=s?.user.id??null;if(identity.current!==next){identity.current=next;generation.current++;setAllowed(null);setContentReady(false);setData(null);setOverview(null);setEdit(null)}setUid(next);setReady(true)});return()=>subscription.unsubscribe()},[]);
  useEffect(()=>{if(!uid)return;let alive=true;rpc<boolean>('makeit_is_admin').then(v=>{if(alive)setAllowed(v)}).catch(e=>{if(alive)setError(errorText(e))});return()=>{alive=false}},[uid]);
- async function load(shopId?:string){const g=++generation.current;setLoading(true);setError('');try{if(shopId){const d=await rpc<ShopData>('makeit_admin_shop',{p_shop:shopId});if(g===generation.current)setData(d)}else{const d=await rpc<Overview>('makeit_admin_overview',{p_search:search,p_offset:offset});if(g===generation.current)setOverview(d)}}catch(e){if(g===generation.current)setError(errorText(e))}finally{if(g===generation.current)setLoading(false)}}
+ async function load(shopId?:string){const g=++generation.current;setLoading(true);setError('');try{if(shopId){const d=await rpc<ShopData>('makeit_admin_shop',{p_shop:shopId});if(g===generation.current)setData(d)}else{const d=await rpc<Overview>('makeit_admin_overview',{p_search:search,p_offset:offset});if(g===generation.current)setOverview(d)}}catch(e){if(g===generation.current)setError(errorText(e))}finally{if(g===generation.current){setLoading(false);setContentReady(true)}}}
  useEffect(()=>{if(allowed)void load()},[allowed,offset]);
- if(!ready)return <main className="auth-page">กำลังโหลด…</main>;
+ if(!ready)return <LoadingScreen label="กำลังเปิดระบบ Admin" admin/>;
  if(!uid)return <Auth onRecovered={()=>{}}/>;
- if(allowed!==true)return <main className="auth-page"><div className="auth-card"><Logo/><h1>{allowed===false?'ไม่มีสิทธิ์เข้าหน้า Admin':'กำลังตรวจสอบสิทธิ์…'}</h1>{error&&<p role="alert">{error}</p>}<a className="btn primary" href="/">กลับหน้าร้าน</a><button className="btn secondary" onClick={()=>supabase().auth.signOut()}>ออกจากระบบ</button></div></main>;
+ if(allowed===null)return <LoadingScreen label="กำลังตรวจสอบสิทธิ์ Admin" admin/>;
+ if(allowed===false)return <main className="auth-page"><div className="auth-card"><Logo/><h1>ไม่มีสิทธิ์เข้าหน้า Admin</h1>{error&&<p role="alert">{error}</p>}<a className="btn primary" href="/">กลับหน้าร้าน</a><button className="btn secondary" onClick={()=>supabase().auth.signOut()}>ออกจากระบบ</button></div></main>;
+ if(!contentReady)return <LoadingScreen label="กำลังเตรียมหน้า Admin" admin/>;
  const editRow=(action:Edit['action'],row:object)=>setEdit({action,row});
  const activities=data?[...data.movements.map(m=>({id:m.id,time:m.created_at,title:`${data.products.find(p=>p.id===m.product_id)?.name??'สินค้า'} · ${movementNames[m.kind]??m.kind}`,detail:`${m.quantity>0?'+':''}${m.quantity} ชิ้น · ${m.reason??''}`})),...data.entries.map(e=>({id:e.id,time:e.occurred_at,title:e.category,detail:`${baht(e.amount)} · ${e.note}`}))].sort((a,b)=>b.time.localeCompare(a.time)):[];
  return <main className="admin-page"><header className="admin-header"><div className="admin-brand"><Logo/><div><strong>Control Center</strong><small>MAKE IT Administration</small></div></div><div className="admin-header-actions"><span className="role-chip"><ShieldCheck size={15}/>SYSTEM ADMIN</span><a className="btn secondary" href="/"><Store size={16}/>หน้าร้าน</a><button className="btn secondary" onClick={()=>supabase().auth.signOut()}>ออกจากระบบ</button></div></header>
