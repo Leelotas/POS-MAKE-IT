@@ -18,6 +18,7 @@ Vercel preview and production need:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (supports the publishable key)
 - `SUPABASE_SERVICE_ROLE_KEY` (server only; supports a Supabase secret key)
 - `CRON_SECRET` (server only)
+- `TYPHOON_OCR_API_KEY` (server only; used to read the transaction date/time from transfer slips)
 
 `/api/cleanup` accepts only `Authorization: Bearer <CRON_SECRET>` and runs daily at 20:00 UTC. It removes unreferenced uploads older than 24 hours using a mark-under-shop-lock protocol so deletion cannot race checkout. Failed Storage removals are retried on the next run. Never expose the service key in a `NEXT_PUBLIC_` variable.
 
@@ -34,6 +35,7 @@ Authentication Site URL is `https://make-it-pos.vercel.app`; the redirect allowl
 - Gross profit = non-canceled sales − cost of goods sold. Net profit = gross profit + other income − operating expenses. Cash balance change = sales + other income − paid purchases − operating expenses.
 - Forecast = current stock × (current sale price − current average cost), including inactive stock; it does not deduct future operating expenses.
 - Report dates use Asia/Bangkok. Database timestamps are UTC; SQL monetary values are numeric; JavaScript calculations use Decimal. Exports contain the same calculations as the UI.
+- Checkout records the actual sale date/time either from a seller-confirmed manual entry or from OpenTyphoon OCR. OCR only pre-fills the fields; the seller must review them before saving. Customer type is stored with each sale, and the Week 3 export produces `Date | Time | Product | Quantity | Price | Total | Customer Type | Gender` rows for Google Sheets.
 
 ## Verification
 
